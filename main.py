@@ -1,7 +1,6 @@
 import requests
 import logging
 from aiogram import Bot, Dispatcher, executor, types
-from tele_bot_api import *
 from dotenv import load_dotenv
 import os
 
