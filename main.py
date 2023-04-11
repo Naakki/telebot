@@ -9,7 +9,8 @@ load_dotenv()
 
 logging.basicConfig(level=logging.INFO)
 
-bot = Bot(token=os.environ.get('BOT_API'))
+PROXY_URL = 'http://proxy.server:3128'
+bot = Bot(token=os.environ.get('BOT_API'), proxy=PROXY_URL)
 dp = Dispatcher(bot)
 
 
