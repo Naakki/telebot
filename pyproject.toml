@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "combo-bot"
+version = "0.1.0"
+description = ""
+authors = ["Nakki <alex.nakki@gmail.com>"]
+readme = "README.md"
+packages = [{include = "combo_bot"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+aiogram = "^2.25.1"
+requests = "^2.28.2"
+openpyxl = "^3.1.2"
+python-dotenv = "^1.0.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
