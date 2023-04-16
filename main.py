@@ -36,7 +36,7 @@ async def main():
     register_handlers_common(dp)
     register_handlers_file(dp)
     register_handlers_brands(dp)
-
+    
     await set_commands(bot)
 
     await dp.skip_updates()

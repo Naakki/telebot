@@ -1,10 +1,12 @@
 from aiogram import Dispatcher, types
-from aiogram.utils.markdown import hide_link
+from aiogram.utils.markdown import hide_link, hlink
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher.filters.state import State, StatesGroup
 
 import logging
+
+from app import make_data
 
 
 kb = [
@@ -81,7 +83,12 @@ async def cmd_cancel(message: types.Message, state: FSMContext):
 async def brands(message: types.Message, state: FSMContext):
     await state.set_state(Brands.choose_brand.state)
 
-    text = f'Тут будет текстовый список с моделями {message.text}'
+    text = ''
+    i = 0
+    for phone in make_data.telephones:
+        if message.text.lower() == phone[0].lower():
+            text += f'/{i}  {phone[1]}\n'
+            i += 1
 
     match message.text.lower():
         case 'itel':
