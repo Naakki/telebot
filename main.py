@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 from app.handlers import register_handlers_file
 from app.handlers import register_handlers_common
 from app.handlers import register_handlers_brands
+from app.handlers import register_callback_handler
 
 
 async def set_commands(bot: Bot):
@@ -28,6 +29,8 @@ async def main():
         level=logging.INFO,
         format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
         )
+    
+    logging.info('Starting polling...')
 
     # PROXY_URL = 'http://proxy.server:3128'
     bot = Bot(token=os.environ.get('BOT_API'), parse_mode=types.ParseMode.HTML)
@@ -36,6 +39,7 @@ async def main():
     register_handlers_common(dp)
     register_handlers_file(dp)
     register_handlers_brands(dp)
+    register_callback_handler(dp)
     
     await set_commands(bot)
 

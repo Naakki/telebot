@@ -1,38 +1,18 @@
 from aiogram import Dispatcher, types
-from aiogram.utils.markdown import hide_link, hlink
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher.filters.state import State, StatesGroup
 
 import logging
+import pathlib
 
-from app import make_data
+from app import database
+from app import keyboards
 
-
-kb = [
-    [types.KeyboardButton(text='Tecno'), 
-     types.KeyboardButton(text='Oppo'),
-     types.KeyboardButton(text='Itel')
-     ],
-
-     [types.KeyboardButton(text='Infinix'),
-     types.KeyboardButton(text='Realme'),
-     types.KeyboardButton(text='Xiaomi')],
-
-     [types.KeyboardButton(text='Black Fox')]
-    ]
-keyboard = types.ReplyKeyboardMarkup(
-    keyboard=kb,
-    resize_keyboard=True
-)
-
+database.make_db()
 
 class GetDataFile(StatesGroup):
     waiting_for_send_file = State()
-
-
-class Brands(StatesGroup):
-    choose_brand = State()
 
 
 async def get_file_start(message: types.Message, state: FSMContext):
@@ -41,18 +21,19 @@ async def get_file_start(message: types.Message, state: FSMContext):
     '''    
     await state.set_state(GetDataFile.waiting_for_send_file.state)
     await message.answer('Отправь файл с данными: ', reply_markup=types.ReplyKeyboardRemove())
+    logging.info('Asking data file...')
 
 async def get_file(message: types.Message, state: FSMContext):
     '''
-    Функция проверяет полученный файл, если он валидный, то меняет состояние.
+    Функция проверяет полученный файл, если он валидный, то сохраняет его.
     Если файл не валиден, то запрашивает повторную отправку.
     '''
     try:
         if message.document.file_name.split('.')[-1] == 'xlsx':
-            await message.document.download(destination_file='Combo.xlsx')
+            await message.document.download(destination_file=pathlib.Path('data', 'Combo.xlsx'))
             logging.info('Data file was downloaded')
             await message.answer('Обновил, спасибо', 
-                                 reply_markup=types.ReplyKeyboardMarkup(kb, resize_keyboard=True))
+                                 reply_markup=keyboards.get_brand_kb())
             await state.finish()
         else:
             await message.answer('Отправь файл с данными')
@@ -68,8 +49,11 @@ async def cmd_start(message: types.Message, state: FSMContext):
     await state.finish()
 
     await message.answer(
-        "Привет! Тут ты можешь уточнить прайс по акции <b>Combo</b> на действующую матрицу смартфонов. Приятного пользования\n\n<i>Выбери раздел:</i>", 
-        reply_markup=keyboard)
+        """Привет! Тут ты можешь уточнить прайс по 
+        акции <b>Combo</b> на действующую матрицу 
+        смартфонов. Приятного пользования\n\n
+        <i>Выбери раздел:</i>""", 
+        reply_markup=keyboards.get_main_kb())
 
 
 async def cmd_cancel(message: types.Message, state: FSMContext):
@@ -77,50 +61,85 @@ async def cmd_cancel(message: types.Message, state: FSMContext):
     Функция отменяет все действия пользователя
     '''
     await state.finish()
-    await message.answer('Действие отменено', reply_markup=keyboard)
+    await message.answer('Действие отменено\n<i>Выбери раздел:</i>', 
+                         reply_markup=keyboards.get_main_kb())
 
 
-async def brands(message: types.Message, state: FSMContext):
-    await state.set_state(Brands.choose_brand.state)
+async def combo_phones(message: types.Message, state: FSMContext):
+    await message.answer('<i>Выбери бренд:</i>', reply_markup=keyboards.get_brand_kb())
 
-    text = ''
-    i = 0
-    for phone in make_data.telephones:
-        if message.text.lower() == phone[0].lower():
-            text += f'/{i}  {phone[1]}\n'
-            i += 1
 
+async def brands(message: types.Message, page=0):
     match message.text.lower():
         case 'itel':
-            url = 'https://mobitrends.co.ke/wp-content/uploads/2018/04/iTel-Logo.jpg'
+            url = pathlib.Path('img', 'itel.jpg')
         case 'tecno':
-            url = 'https://www.nairaland.com/attachments/14066211_screenshot20210819141622_jpeg2eb5a55728c4095bd2c96d414c18a2f7'
+            url = pathlib.Path('img', 'tecno.jpg')
         case 'oppo':
-            url = 'https://aitnews.com/wp-content/uploads/2020/04/0.jpeg'
+            url = pathlib.Path('img', 'oppo.jpeg')
         case 'infinix':
-            url = 'https://www.pinoytechnoguide.com/wp-content/uploads/2020/09/infinix-logo.jpg'
+            url = pathlib.Path('img', 'infinix.jpg')
         case 'realme':
-            url = 'https://seeklogo.com/images/R/realme-logo-8D20880530-seeklogo.com.png'
+            url = pathlib.Path('img', 'realme.png')
         case 'xiaomi':
-            url = 'https://static.startuptalky.com/2021/05/Xiaomi_logo_startuptalky.png'
+            url = pathlib.Path('img', 'xiaomi.jpg')
         case 'black fox':
-            url = 'https://i.ytimg.com/vi/TtTe7pIpruA/hqdefault.jpg'
+            url = pathlib.Path('img', 'black fox.jpg')
+        case 'назад':
+            await message.answer('<i>Выбери раздел:</i>', reply_markup=keyboards.get_main_kb())
+    try:
+        with open(url, 'rb') as photo:
+            await message.answer_photo(photo=photo, 
+                                    reply_markup=keyboards.get_model_ikb(data=message.text)
+                                    )
+    except UnboundLocalError:
+        logging.info('Action was canceled')
+        
 
-    await message.answer(f'{text} {hide_link(url)}')
+async def show_combo(callback: types.CallbackQuery):
+    data = callback.data
 
-    await state.finish()
+    check = f"<b>Состав чека:</b>\n\
+            <i>{data}  {database.get_price(data)} руб.\n\
+            Страховка  {database.get_insurance(data)} руб.\n\
+            Sim-карта  2150 руб.</i>\n\n Сумма по акции <b> {database.get_combo(data)} руб.</b>"
+    await callback.message.answer(text=check)
+    await callback.answer()
 
 
 def register_handlers_common(dp: Dispatcher):
-    dp.register_message_handler(cmd_start, commands=['start'], state='*')
-    dp.register_message_handler(cmd_cancel, commands=['cancel'], state='*')
-    dp.register_message_handler(cmd_cancel, Text(equals='отмена', ignore_case=True), state='*')
+    dp.register_message_handler(cmd_start, 
+                                commands=['start'], 
+                                state='*'
+                                )
+    dp.register_message_handler(cmd_cancel, 
+                                commands=['cancel'], 
+                                state='*'
+                                )
+    dp.register_message_handler(cmd_cancel, 
+                                Text(equals='отмена', 
+                                     ignore_case=True), 
+                                state='*'
+                                )
 
     
 def register_handlers_file(dp: Dispatcher):
-    dp.register_message_handler(get_file_start, commands=['update_file'], state='*')
-    dp.register_message_handler(get_file, content_types=types.ContentTypes.ANY, state=GetDataFile.waiting_for_send_file)
+    dp.register_message_handler(get_file_start, 
+                                commands=['update_file'], 
+                                state='*'
+                                )
+    dp.register_message_handler(get_file, 
+                                content_types=types.ContentTypes.ANY, 
+                                state=GetDataFile.waiting_for_send_file
+                                )
 
 
 def register_handlers_brands(dp: Dispatcher):
-    dp.register_message_handler(brands, state=None)
+    dp.register_message_handler(combo_phones, Text(equals='combo',
+                                                   ignore_case=True), 
+                                                   state='*')
+    dp.register_message_handler(brands, state='*')
+
+
+def register_callback_handler(dp: Dispatcher):
+    dp.register_callback_query_handler(show_combo)
