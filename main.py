@@ -32,8 +32,10 @@ async def main():
     
     logging.info('Starting polling...')
 
-    # PROXY_URL = 'http://proxy.server:3128'
-    bot = Bot(token=os.environ.get('BOT_API'), parse_mode=types.ParseMode.HTML)
+    PROXY_URL = 'http://proxy.server:3128'
+    bot = Bot(token=os.environ.get('BOT_API'), 
+              parse_mode=types.ParseMode.HTML,
+              proxy=PROXY_URL)
     dp = Dispatcher(bot, storage=MemoryStorage())
 
     register_handlers_common(dp)

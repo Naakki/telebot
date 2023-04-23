@@ -2,6 +2,7 @@ from aiogram.types import KeyboardButton, ReplyKeyboardMarkup, InlineKeyboardBut
 
 import math
 import logging
+import pathlib
 import sqlite3
 
 
@@ -47,7 +48,7 @@ def get_model_ikb(data, page=0):
     i_keyboard = InlineKeyboardMarkup()    
     phones = []
 
-    with sqlite3.connect('data\combo.db') as db:
+    with sqlite3.connect(pathlib.Path('data', 'combo.db')) as db:
         cur = db.cursor()
         models = cur.execute("SELECT * FROM phones WHERE brand=?", (data,))
 

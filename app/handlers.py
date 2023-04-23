@@ -9,7 +9,6 @@ import pathlib
 from app import database
 from app import keyboards
 
-database.make_db()
 
 class GetDataFile(StatesGroup):
     waiting_for_send_file = State()
@@ -32,6 +31,7 @@ async def get_file(message: types.Message, state: FSMContext):
         if message.document.file_name.split('.')[-1] == 'xlsx':
             await message.document.download(destination_file=pathlib.Path('data', 'Combo.xlsx'))
             logging.info('Data file was downloaded')
+            database.make_db()
             await message.answer('Обновил, спасибо', 
                                  reply_markup=keyboards.get_brand_kb())
             await state.finish()

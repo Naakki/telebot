@@ -68,7 +68,7 @@ def make_db():
     '''
 
     # Формируется таблица с телефонами
-    with sqlite3.connect('data\combo.db') as db:
+    with sqlite3.connect(pathlib.Path('data', 'combo.db')) as db:
         logging.info('Connecting database')
         cur = db.cursor()
 
@@ -162,7 +162,7 @@ def get_price(model):
     '''
     Выводит запись из таблицы БД    
     '''
-    with sqlite3.connect('data\combo.db') as db:
+    with sqlite3.connect(pathlib.Path('data', 'combo.db')) as db:
         cur = db.cursor()
 
         price = cur.execute("""SELECT price FROM phones WHERE model=?""", (model,)).fetchone()[0]
@@ -171,7 +171,7 @@ def get_price(model):
 
 
 def get_insurance(model):
-    with sqlite3.connect('data\combo.db') as db:
+    with sqlite3.connect(pathlib.Path('data', 'combo.db')) as db:
         cur = db.cursor()
 
         price = cur.execute("""SELECT price FROM phones WHERE model=?""", (model,)).fetchone()[0]
@@ -183,7 +183,7 @@ def get_insurance(model):
 
 def get_combo(model):
 
-    with sqlite3.connect('data\combo.db') as db:
+    with sqlite3.connect(pathlib.Path('data', 'combo.db')) as db:
         cur = db.cursor()
 
         price, discount = cur.execute("""SELECT price, discount FROM phones WHERE model=?""", 
@@ -197,7 +197,7 @@ def get_combo(model):
     
 
 def get_logo(brand):
-    with sqlite3.connect('data\combo.db') as db:
+    with sqlite3.connect(pathlib.Path('data', 'combo.db')) as db:
         cur = db.cursor()
 
         logo_bin = cur.execute("""SELECT img FROM logo WHERE brand=?""", (brand,)).fetchone()
